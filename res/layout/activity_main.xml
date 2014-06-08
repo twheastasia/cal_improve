@@ -23,17 +23,6 @@
         android:orientation="horizontal" >
     </LinearLayout>
 
-    <ListView
-        android:id="@+id/main_listview"
-        android:layout_width="fill_parent"
-        android:layout_height="338dp"
-        android:layout_above="@+id/btn_add"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentTop="true"
-        android:layout_alignRight="@+id/relativeLayout1" >
-
-    </ListView>
-
     <Button
         android:id="@+id/btn_add"
         android:layout_width="30dip"
@@ -41,5 +30,33 @@
         android:layout_alignParentBottom="true"
         android:layout_alignParentRight="true"
         android:background="@drawable/btn_add" />
+
+    <Button
+        android:id="@+id/showResult"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/main_listview"
+        android:layout_alignParentBottom="true"
+        android:layout_toLeftOf="@+id/btn_add"
+        android:text="显示结果" />
+
+    <ListView
+        android:id="@+id/main_listview"
+        android:layout_width="fill_parent"
+        android:layout_height="338dp"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentTop="true" >
+    </ListView>
+
+    <EditText
+        android:id="@+id/editText1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/showResult"
+        android:layout_alignLeft="@+id/showResult"
+        android:layout_toLeftOf="@+id/btn_add"
+        android:ems="10"
+        android:numeric="integer"
+        android:hint="请输入经验值" />
 
 </RelativeLayout>
