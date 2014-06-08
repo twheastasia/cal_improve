@@ -7,6 +7,13 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+
+import org.apache.http.util.EncodingUtils;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -14,9 +21,11 @@ import android.app.AlertDialog.Builder;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
 import android.text.Editable;
+import android.text.InputType;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -34,6 +43,8 @@ public class MainListActivity extends Activity {
 
 	private static int MIN_EXP = 0;
 	private static int MAX_EXP = 4000;
+	private static String SDCARD = "/sdcard/";
+	private static String DIR_NAME = "figureExp";
 	
 	private ListView listView;
 	private Button btn_add;
@@ -49,7 +60,7 @@ public class MainListActivity extends Activity {
 	private int[][] finalResult = null;
 	private int totalExperience;
 	private int itemArray[][] = {{400, 3},{200,1}};
-	private String itemExp[] = new String[] { "9600", "8000", "6440", "4500", "3332", "2048", "1024", "512", "400" };
+	private String itemExp[] = new String[] { "9648", "9600", "8440", "7232", "6024", "5328", "4816", "4660", "2448", "400" };
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -297,7 +308,9 @@ public class MainListActivity extends Activity {
 	{
 		new AlertDialog.Builder(this).setTitle("单选框").setIcon(
 				android.R.drawable.ic_dialog_info).setSingleChoiceItems(
-						itemExp, 0,
+					itemExp,
+//							getDefaultExps(),
+						0,
 						new DialogInterface.OnClickListener() {
 							public void onClick(DialogInterface dialog, int which) {
 								Map<String, Object> map = new HashMap<String, Object>();
@@ -315,12 +328,49 @@ public class MainListActivity extends Activity {
 							@Override
 							public void onClick(DialogInterface arg0, int arg1) {
 								// TODO Auto-generated method stub
-
 								arg0.dismiss();
 							}
 						})
-						.setNegativeButton("取消", null)
+						.setNegativeButton("添加", new DialogInterface.OnClickListener() {
+							@Override
+							public void onClick(DialogInterface arg0, int arg1) {
+								// TODO Auto-generated method stub
+								arg0.dismiss();
+								showAddItemExpDialog(pos, text);
+							}
+						})
 						.show();
+	}
+	
+	private void showAddItemExpDialog(final int pos, final String text)
+	{
+		final EditText et = new EditText(this); 
+		et.setInputType(InputType.TYPE_CLASS_NUMBER);
+		new AlertDialog.Builder(this).setTitle("请输入经验值").setIcon(
+				android.R.drawable.ic_dialog_info)
+				.setView(et)
+				.setPositiveButton("确定", new DialogInterface.OnClickListener() {
+					@Override
+					public void onClick(DialogInterface arg0, int arg1) {
+						// TODO Auto-generated method stub
+						Map<String, Object> map = new HashMap<String, Object>();
+						map.put("item_position", ""+listData.size()+1);
+						map.put("item_icon", R.drawable.evolution1);
+						map.put("item_btn", et.getText().toString());
+						map.put("item_count", text);
+						map.put("item_delete", R.drawable.btn_dele);
+						listData.set(pos, map);
+						if(et.getText().toString().isEmpty()){
+							itemArray[pos][0] = 9600;
+						}else{
+							itemArray[pos][0] = Integer.parseInt(et.getText().toString());
+						}
+						renderListView();
+						arg0.dismiss();
+					}
+				})
+				.setNegativeButton("取消", null)
+				.show();
 	}
 	
 	private String resultString(int[][] array, int resultCount)
@@ -465,5 +515,101 @@ public class MainListActivity extends Activity {
 		Toast.makeText(this, info, Toast.LENGTH_LONG).show();
 	}
 	
+	private String[] getDefaultExps() throws IOException
+	{
+		String defaultExps[] = null;
+		String fileName = SDCARD+DIR_NAME + "/figureExp.txt";
+		File file = new File(fileName);
+		if(!file.exists()){
+			int i;
+			String s= "";
+			for(i=0;i<itemExp.length; i++){
+				if(i == itemExp.length-1){
+					s += itemExp[i];
+				}else{
+					s += itemExp[i]+"\n";
+				}
+			}
+			createFile(s);
+		}
+		defaultExps = readFileSdcardFile(fileName).split("\n");
+		return defaultExps;
+		
+	}
 	
+	public static void createFile(String text) 
+	{
+		String filename = "expSettings";
+		if(newFolder(DIR_NAME)){
+			File file = new File(filename);
+			if (!file.exists()) {
+				try {
+					//在指定的文件夹中创建文件
+					save(filename, text);
+				} catch (Exception e) {
+				}
+			}
+		}
+	}
+	
+	public static void save(String name, String text)
+	{
+		try {
+			File sdCardDir = Environment.getExternalStorageDirectory();//获取SDCard目录
+			File saveFile = new File(sdCardDir+"/simpleNote/", name +".txt");
+			FileOutputStream outStream = new FileOutputStream(saveFile);
+			outStream.write(text.getBytes());
+			outStream.close();
+		} catch (FileNotFoundException e) {
+			return;
+		}
+		catch (IOException e){
+			return ;
+		}
+	}
+
+	//新建文件夹
+	public static boolean newFolder(String file)
+	{
+		File dirFile = new File( SDCARD +file);
+		try
+		{
+			if (!(dirFile.exists()) && !(dirFile.isDirectory()))
+			{
+				boolean creadok = dirFile.mkdirs();
+				if (creadok)
+				{
+					return true;
+				}
+				else
+				{
+					return false;
+				}
+			}
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace();
+			System.out.println(e);
+			return false;
+		}
+		return true;
+	}
+	
+	public String readFileSdcardFile(String fileName) throws IOException{   
+		  String res="";   
+		  try{   
+			  FileInputStream fin = new FileInputStream(fileName);   
+			  int length = fin.available();   
+			  byte [] buffer = new byte[length];   
+			  fin.read(buffer);       
+			  res = EncodingUtils.getString(buffer, "UTF-8");   
+			  fin.close();       
+		  }   
+
+		  catch(Exception e){   
+			  e.printStackTrace();   
+		  }   
+		  return res;   
+		}   
 }
