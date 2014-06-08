@@ -302,7 +302,7 @@ public class MainListActivity extends Activity {
 							public void onClick(DialogInterface dialog, int which) {
 								Map<String, Object> map = new HashMap<String, Object>();
 								map.put("item_position", ""+pos);
-								map.put("item_icon", R.drawable.btn_add);
+								map.put("item_icon", R.drawable.evolution1);
 								map.put("item_btn", itemExp[which]);
 								map.put("item_count", text);
 								map.put("item_delete", R.drawable.btn_dele);
@@ -436,7 +436,7 @@ public class MainListActivity extends Activity {
 					// TODO Auto-generated method stub
 					Map<String, Object> map = new HashMap<String, Object>();
 					map.put("item_position", ""+position);
-					map.put("item_icon", R.drawable.btn_add);
+					map.put("item_icon", R.drawable.evolution1);
 					map.put("item_btn", "9600");
 					map.put("item_count", arg0.toString());
 					map.put("item_delete", R.drawable.btn_dele);
