@@ -44,8 +44,10 @@
         android:id="@+id/main_listview"
         android:layout_width="fill_parent"
         android:layout_height="338dp"
+        android:layout_above="@+id/editText1"
         android:layout_alignParentRight="true"
         android:layout_alignParentTop="true" >
+
     </ListView>
 
     <EditText

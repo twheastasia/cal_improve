@@ -12,6 +12,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.lang.reflect.Field;
 
 import org.apache.http.util.EncodingUtils;
 
@@ -28,6 +29,8 @@ import android.text.Editable;
 import android.text.InputType;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
@@ -41,15 +44,19 @@ import android.widget.Toast;
 
 public class MainListActivity extends Activity {
 
-	private static int MIN_EXP = 0;
-	private static int MAX_EXP = 4000;
 	private static String SDCARD = "/sdcard/";
 	private static String DIR_NAME = "figureExp";
+	private static final int SETTING = Menu.FIRST;
+	private static final int ABOUT = Menu.FIRST+1;
 	
+	private int MIN_EXP = 0;
+	private int MAX_EXP = 400;
 	private ListView listView;
 	private Button btn_add;
 	private Button showResultBtn;
 	private EditText expEditText;
+	private EditText minET;
+	private EditText maxET;
 	private int cellLength;
 	private AlertDialog loadingDialog;
 	private Thread mThread;
@@ -60,7 +67,9 @@ public class MainListActivity extends Activity {
 	private int[][] finalResult = null;
 	private int totalExperience;
 	private int itemArray[][] = {{400, 3},{200,1}};
-	private String itemExp[] = new String[] { "9648", "9600", "8440", "7232", "6024", "5328", "4816", "4660", "2448", "400" };
+	private String itemExp[] = new String[] { "115200", "28800", "9648", "9600", "8440", "7232", 
+			"6024", "5328", "4816", "4800",  "4660", "3992", "3324", "2656", "2448", "2140", "1832",
+			"1524", "1216", "400"};
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -71,6 +80,7 @@ public class MainListActivity extends Activity {
 		btn_add = (Button)findViewById(R.id.btn_add);
 		listView = (ListView)findViewById(R.id.main_listview);
 		expEditText = (EditText)findViewById(R.id.editText1);
+
 		
 		getData(1);
 		listAdapter = new MyAdapter(this);
@@ -98,8 +108,6 @@ public class MainListActivity extends Activity {
 					mThread = new Thread(runnable);
 					mThread.start();
 				}
-				
-
 			}
 		});
 	}
@@ -111,7 +119,7 @@ public class MainListActivity extends Activity {
 			switch (msg.what) {
 			case 1:
 				loadingDialog.dismiss();
-				showDialog(resultStr);
+				showDialog(resultStr, "计算结果：");
 				break;
 			case 2:
 				break;
@@ -132,6 +140,93 @@ public class MainListActivity extends Activity {
 			mHandler.obtainMessage(1).sendToTarget();
 		}
 	};
+	
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		// Inflate the menu; this adds items to the action bar if it is present.
+		super.onCreateOptionsMenu(menu);
+		menu.add(0, SETTING, 0, "设置");
+		menu.add(0, ABOUT, 0, "关于");
+		
+		return true;
+	}
+	
+	
+	
+	@Override
+	public boolean onMenuItemSelected(int featureId, MenuItem item) {
+		// TODO Auto-generated method stub
+		switch(item.getItemId()){
+		case SETTING:
+			setMinMaxExp();
+			return true;
+		case ABOUT:
+			showAbout();
+			return true;
+		default:
+			break;
+		}
+		return super.onMenuItemSelected(featureId, item);
+	}
+
+	private void setMinMaxExp()
+	{
+		LayoutInflater inflater = getLayoutInflater();
+		View layout = inflater.inflate(R.layout.setexp_arrange,
+				(ViewGroup) findViewById(R.id.setexp));
+		minET = (EditText)layout.findViewById(R.id.edit_min);
+		maxET = (EditText)layout.findViewById(R.id.edit_max);
+		new AlertDialog.Builder(this)
+		.setTitle("设置")
+		.setView(layout)
+		.setPositiveButton("确定", new DialogInterface.OnClickListener() {
+			@Override
+			public void onClick(DialogInterface arg0, int arg1) {
+				// TODO Auto-generated method stub
+			    try {
+                    Field field = arg0.getClass().getSuperclass().getDeclaredField("mShowing");
+                    field.setAccessible(true);
+                    field.set(arg0, false);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+				int min, max;
+				if(!minET.getText().toString().isEmpty() && !maxET.getText().toString().isEmpty()){
+					min = Integer.parseInt(minET.getText().toString());
+					max = Integer.parseInt(maxET.getText().toString());
+					if(min >= max){
+						showInfo("最小值不能大于等于最大值！");
+					}else{
+						MIN_EXP = min;
+						MAX_EXP = max;
+						closeDialog(arg0);
+					}
+				}else{
+					showInfo("最大值或最小值不能为空！");
+				}
+			}
+		})
+		.setNegativeButton("取消", new DialogInterface.OnClickListener() {
+			
+			@Override
+			public void onClick(DialogInterface arg0, int arg1) {
+				// TODO Auto-generated method stub
+				closeDialog(arg0);
+			}
+		})
+		.show();
+	}
+	
+	private void closeDialog(DialogInterface dialog)
+	{
+		try {
+			Field field = dialog.getClass().getSuperclass().getDeclaredField("mShowing");
+			field.setAccessible(true);
+			field.set(dialog, true);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
 	
 	//add data of listview
 	private void getData(int pos) {
@@ -163,7 +258,12 @@ public class MainListActivity extends Activity {
 		for(i=0 ; i< listData.size(); i++){
 			tempListMap = (Map<String, Object>) tempListData[i];
 			itemArray[i][0] = Integer.parseInt((String) tempListMap.get("item_btn"));
-			itemArray[i][1] = Integer.parseInt((String) tempListMap.get("item_count"));
+			if(((String) tempListMap.get("item_count")).isEmpty()){
+				itemArray[i][1] = 0;
+			}else{
+				itemArray[i][1] = Integer.parseInt((String) tempListMap.get("item_count"));
+			}
+			
 		}
 		cellLength = itemArray.length +1;
 	}
@@ -279,11 +379,17 @@ public class MainListActivity extends Activity {
 		return result;
 	}
 	
-	protected void showDialog(String resultStr) 
+	private void showAbout()
+	{
+		String aboutStr = "计算升级材料最佳组合的工具，感谢觅哥的支持！如有任何意见或发现bug，请联系：\ntwh_eastasia@163.com";
+		showDialog(aboutStr, "关于");
+	}
+	
+	protected void showDialog(String resultStr, String title) 
 	{
 		AlertDialog.Builder builder = new Builder(this);
 		builder.setMessage(resultStr);
-		builder.setTitle("结果:");
+		builder.setTitle(title);
 		builder.setPositiveButton("确认", new DialogInterface.OnClickListener() {
 			public void onClick(DialogInterface dialog, int which) {
 				dialog.dismiss();
@@ -320,7 +426,7 @@ public class MainListActivity extends Activity {
 								map.put("item_count", text);
 								map.put("item_delete", R.drawable.btn_dele);
 								listData.set(pos, map);
-								itemArray[pos][1] = Integer.parseInt(itemExp[which]);
+//								itemArray[pos][1] = Integer.parseInt(itemExp[which]);
 								renderListView();
 							}
 						})
@@ -360,11 +466,11 @@ public class MainListActivity extends Activity {
 						map.put("item_count", text);
 						map.put("item_delete", R.drawable.btn_dele);
 						listData.set(pos, map);
-						if(et.getText().toString().isEmpty()){
-							itemArray[pos][0] = 9600;
-						}else{
-							itemArray[pos][0] = Integer.parseInt(et.getText().toString());
-						}
+//						if(et.getText().toString().isEmpty()){
+//							itemArray[pos][0] = 9600;
+//						}else{
+//							itemArray[pos][0] = Integer.parseInt(et.getText().toString());
+//						}
 						renderListView();
 						arg0.dismiss();
 					}
@@ -385,9 +491,12 @@ public class MainListActivity extends Activity {
 		for(i=0; i< Math.min(array.length, resultCount);i++){
 			itemResultStr = "";
 			for(j=0; j<arrayCellLength-1; j++){
-				itemResultStr += " " + itemArray[j][0] + " * " + array[i][j] + " ";
+				if(array[i][j] == 0){
+					continue;
+				}
+				itemResultStr += " " + itemArray[j][0] + " * " + array[i][j] + " 个 ";
 			}
-			resultStrs += "wasted: " + array[i][arrayCellLength-1] +", "+ itemResultStr + ";\n";
+			resultStrs += "浪费的经验值: " + array[i][arrayCellLength-1] +", 材料组合： "+ itemResultStr + ";\n";
 		}
 		return resultStrs;
 	}
@@ -446,7 +555,7 @@ public class MainListActivity extends Activity {
 			holder.countET.setText((String)listData.get(position).get("item_count"));
 			holder.itemDel.setBackgroundResource((Integer)listData.get(position).get("item_delete"));
 			
-//			final String editTextContent = holder.countET.getText().toString();
+			final String btnContent = holder.itemBtn.getText().toString();
 			holder.itemBtn.setOnClickListener(new View.OnClickListener() {
 				@Override
 				public void onClick(View v) {
@@ -487,15 +596,15 @@ public class MainListActivity extends Activity {
 					Map<String, Object> map = new HashMap<String, Object>();
 					map.put("item_position", ""+position);
 					map.put("item_icon", R.drawable.evolution1);
-					map.put("item_btn", "9600");
+					map.put("item_btn", btnContent);
 					map.put("item_count", arg0.toString());
 					map.put("item_delete", R.drawable.btn_dele);
 					listData.set(position, map);
-					if(arg0.toString().isEmpty()){
-						itemArray[position][1] = 1;
-					}else{
-						itemArray[position][1] = Integer.parseInt(arg0.toString());
-					}
+//					if(arg0.toString().isEmpty()){
+//						itemArray[position][1] = 1;
+//					}else{
+//						itemArray[position][1] = Integer.parseInt(arg0.toString());
+//					}
 				}
 			});
 			return convertView;
