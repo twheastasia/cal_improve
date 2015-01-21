@@ -176,6 +176,7 @@ public class MainListActivity extends Activity {
 				(ViewGroup) findViewById(R.id.setexp));
 		minET = (EditText)layout.findViewById(R.id.edit_min);
 		maxET = (EditText)layout.findViewById(R.id.edit_max);
+
 		new AlertDialog.Builder(this)
 		.setTitle("设置")
 		.setView(layout)
@@ -215,6 +216,8 @@ public class MainListActivity extends Activity {
 			}
 		})
 		.show();
+		minET.setText(MIN_EXP+"");
+		maxET.setText(MAX_EXP+"");
 	}
 	
 	private void closeDialog(DialogInterface dialog)
@@ -276,9 +279,10 @@ public class MainListActivity extends Activity {
 		ArrayList<Object> arrayList = new ArrayList<Object>();
 		ArrayList<Object> tempList = new ArrayList<Object>();
 		arrayList = (ArrayList<Object>) last_result.clone();
+
 		//单使用这个材料所需要的个数，和这个材料实际拥有的个数，两者之间取一个最小值
 		int minCount = Math.min(total/arr[index][0]+1,arr[index][1]);
-		for(t=0 ; t <= minCount; t++){
+		for(t=1 ; t <= minCount; t++){
 			tempList = (ArrayList<Object>) arrayList.clone();
 			tempList.add(t);
 			if(index == arr.length-1){
@@ -381,7 +385,7 @@ public class MainListActivity extends Activity {
 	
 	private void showAbout()
 	{
-		String aboutStr = "计算升级材料最佳组合的工具，感谢觅哥的支持！如有任何意见或发现bug，请联系：\ntwh_eastasia@163.com";
+		String aboutStr = "计算雷霆战机升级材料最佳组合的小工具，仅供参考使用 ，还是以功能为主，界面什么的只能惨不忍睹了。在此特别感谢觅哥的支持！\n如有任何意见或发现bug，请联系：\ntwh_eastasia@163.com";
 		showDialog(aboutStr, "关于");
 	}
 	
@@ -412,7 +416,7 @@ public class MainListActivity extends Activity {
 	
 	private void showChooseItemDialog(final int pos, final String text)
 	{
-		new AlertDialog.Builder(this).setTitle("单选框").setIcon(
+		new AlertDialog.Builder(this).setTitle("选择经验值（可手动添加）").setIcon(
 				android.R.drawable.ic_dialog_info).setSingleChoiceItems(
 					itemExp,
 //							getDefaultExps(),
@@ -538,7 +542,7 @@ public class MainListActivity extends Activity {
 				
 				convertView = mInflater.inflate(R.layout.adapter_listview_item, null);
 				holder.indexTV = (TextView)convertView.findViewById(R.id.item_position);
-				holder.itemImg = (ImageView)convertView.findViewById(R.id.items_icon);
+//				holder.itemImg = (ImageView)convertView.findViewById(R.id.items_icon);
 				holder.itemBtn = (Button)convertView.findViewById(R.id.item_btn);
 				holder.countET = (EditText)convertView.findViewById(R.id.item_count);
 				holder.itemDel = (Button)convertView.findViewById(R.id.item_delete);
@@ -550,7 +554,7 @@ public class MainListActivity extends Activity {
 			}
 			
 			holder.indexTV.setText((String)listData.get(position).get("item_position"));
-			holder.itemImg.setBackgroundResource((Integer)listData.get(position).get("item_icon"));
+//			holder.itemImg.setBackgroundResource((Integer)listData.get(position).get("item_icon"));
 			holder.itemBtn.setText((String)listData.get(position).get("item_btn"));
 			holder.countET.setText((String)listData.get(position).get("item_count"));
 			holder.itemDel.setBackgroundResource((Integer)listData.get(position).get("item_delete"));
@@ -570,8 +574,13 @@ public class MainListActivity extends Activity {
 				public void onClick(View arg0) {
 					// TODO Auto-generated method stub
 //					showInfo("delete which one "+ position);
-					listData.remove(position);
-					renderListView();
+					if(listData.size() == 1){
+						showInfo("至少保留一条数据！");
+					}else if(listData.size() > 1){
+						listData.remove(position);
+						renderListView();
+					}
+					
 				}
 			});
 			
@@ -580,7 +589,6 @@ public class MainListActivity extends Activity {
 				@Override
 				public void onTextChanged(CharSequence arg0, int arg1, int arg2, int arg3) {
 					// TODO Auto-generated method stub
-			
 				}
 				
 				@Override
@@ -600,6 +608,9 @@ public class MainListActivity extends Activity {
 					map.put("item_count", arg0.toString());
 					map.put("item_delete", R.drawable.btn_dele);
 					listData.set(position, map);
+//					if(Integer.parseInt(arg0.toString()) > 50){
+//						showInfo("友情提示：个数不要填太多哦，否则会计算的很慢。");
+//					}
 //					if(arg0.toString().isEmpty()){
 //						itemArray[position][1] = 1;
 //					}else{

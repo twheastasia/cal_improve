@@ -5,7 +5,7 @@
  * should not be modified by hand.
  */
 
-package com.twh.testruby;
+package com.twh.figureexps;
 
 public final class R {
     public static final class attr {
